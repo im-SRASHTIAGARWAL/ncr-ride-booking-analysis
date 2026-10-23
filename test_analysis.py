@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import pytest
-from main import generate_booking_report, generate_cancellation_report
+from main import generate_booking_report, generate_cancellation_report, generate_reason_report
 from main import analyze_booking_status, load_data
 
 def test_generate_booking_report_percentages():
@@ -108,3 +108,21 @@ def test_cancellation_report_percentages():
 
     assert list(report["Bookings"]) == [1, 1, 1, 1]
     assert list(report["Percentage"]) == [20.0, 20.0, 20.0, 20.0]
+
+
+def test_generate_reason_report():
+    df = pd.DataFrame({
+        "Reason": [
+            "Wrong Address",
+            "Wrong Address",
+            "Change of plans",
+            None,
+            "",
+        ]
+    })
+
+    report = generate_reason_report(df, "Reason")
+
+    assert report.iloc[0]["Reason"] == "Wrong Address"
+    assert report.iloc[0]["Count"] == 2
+    assert report.iloc[0]["Percentage"] == 66.67

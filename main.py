@@ -139,11 +139,36 @@ def main() -> None:
     print("\nCancellation and unsuccessful booking report:")
     print(cancellation_report.to_string(index=False))
 
+    
+    # Generate reports for cancellation and incomplete ride reasons
+    reason_columns = {
+        "customer_cancellation_reasons": "Reason for cancelling by Customer",
+        "driver_cancellation_reasons": "Driver Cancellation Reason",
+        "incomplete_ride_reasons": "Incomplete Rides Reason",
+    }
+
+    for filename, column in reason_columns.items():
+        reason_report = generate_reason_report(df, column)
+
+        report_path = output_dir / f"{filename}.csv"
+        reason_report.to_csv(report_path, index=False)
+
+        print(f"\nTop reasons for {column}:")
+        print(reason_report.head(5).to_string(index=False))
+        print(f"Saved to: {report_path}")
+        chart_path = save_reason_chart(
+        df,
+        column,
+        f"Top Reasons: {column}",
+        f"{filename}.png",
+    )
+        print(f"Chart saved to: {chart_path}")
+
+
     chart_path = save_booking_status_chart(df)
     print(f"\nBooking report saved to: {report_path}")
     print(f"Cancellation report saved to: {cancellation_path}")
     print(f"Chart saved to: {chart_path}")
-
 
 
 
@@ -174,6 +199,84 @@ def generate_cancellation_report(df: pd.DataFrame) -> pd.DataFrame:
     ).round(2)
 
     return report
+
+
+def generate_reason_report(
+    df: pd.DataFrame,
+    reason_column: str,
+) -> pd.DataFrame:
+    """Count the most common reasons in a dataset column."""
+
+    if reason_column not in df.columns:
+        raise ValueError(f"Missing required column: {reason_column}")
+
+    reasons = (
+        df[reason_column]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+
+    reasons = reasons[reasons != ""]
+
+    report = (
+        reasons.value_counts()
+        .rename_axis("Reason")
+        .reset_index(name="Count")
+    )
+
+    if report.empty:
+        report["Percentage"] = pd.Series(dtype=float)
+    else:
+        report["Percentage"] = (
+            report["Count"] / report["Count"].sum() * 100
+        ).round(2)
+
+    return report
+
+
+def save_reason_chart(
+    df: pd.DataFrame,
+    reason_column: str,
+    chart_title: str,
+    filename: str,
+) -> Path:
+    """Create and save a bar chart of ride cancellation reasons."""
+
+    if reason_column not in df.columns:
+        raise ValueError(f"Missing required column: {reason_column}")
+
+    reasons = (
+        df[reason_column]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+    reasons = reasons[reasons != ""]
+
+    if reasons.empty:
+        raise ValueError(f"No valid reasons found in {reason_column}")
+
+    top_reasons = reasons.value_counts().head(5)
+
+    output_dir = BASE_DIR / "Outputs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    ax = top_reasons.sort_values().plot(
+        kind="barh",
+        figsize=(9, 5),
+        title=chart_title,
+    )
+    ax.set_xlabel("Number of Bookings")
+    ax.set_ylabel("Reason")
+
+    plt.tight_layout()
+
+    chart_path = output_dir / filename
+    plt.savefig(chart_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+    return chart_path
 
 
 if __name__ == "__main__":
