@@ -92,11 +92,42 @@ def analyze_booking_status(df: pd.DataFrame) -> pd.Series:
 
     return df["Booking Status"].value_counts()
 
+
+def generate_booking_report(df: pd.DataFrame) -> pd.DataFrame:
+    """Generate a summary report for booking statuses."""
+    total_bookings = len(df)
+
+    if total_bookings == 0:
+        raise ValueError("Cannot report on an empty dataset.")
+
+    status_counts = df["Booking Status"].value_counts()
+
+    report = pd.DataFrame({
+        "Booking Status": status_counts.index,
+        "Bookings": status_counts.values,
+    })
+
+    report["Percentage"] = (
+        report["Bookings"] / total_bookings * 100
+    ).round(2)
+
+    return report
+
 def main() -> None:
     df = load_data(DATA_PATH)
 
     validate_data(df)
     
+    report = generate_booking_report(df)
+
+    output_dir = BASE_DIR / "Outputs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    report_path = output_dir / "booking_summary.csv"
+    report.to_csv(report_path, index=False)
+
+    print(f"\nBooking report saved to: {report_path}")
+    print(report)
     print(f"Dataset loaded and validated: {len(df):,} rows")
     print("\nBookings by status:")
     print(analyze_booking_status(df))

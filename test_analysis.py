@@ -1,8 +1,34 @@
 from pathlib import Path
 import pandas as pd
 import pytest
-
+from main import generate_booking_report
 from main import analyze_booking_status, load_data
+
+def test_generate_booking_report_percentages():
+    df = pd.DataFrame({
+        "Booking Status": [
+            "Completed",
+            "Completed",
+            "Cancelled by Customer",
+            "Incomplete",
+        ]
+    })
+
+    report = generate_booking_report(df)
+    percentages = dict(
+        zip(report["Booking Status"], report["Percentage"])
+    )
+
+    assert percentages["Completed"] == 50.0
+    assert percentages["Cancelled by Customer"] == 25.0
+    assert percentages["Incomplete"] == 25.0
+
+
+def test_generate_booking_report_rejects_empty_data():
+    df = pd.DataFrame({"Booking Status": []})
+
+    with pytest.raises(ValueError, match="empty dataset"):
+        generate_booking_report(df)
 
 from main import validate_data
 def test_validate_data_accepts_valid_dataset():
