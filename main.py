@@ -6,8 +6,7 @@ def save_booking_status_chart(df: pd.DataFrame) -> Path:
     """Create and save a chart of booking statuses."""
     if "Booking Status" not in df.columns:
         raise ValueError("Missing 'Booking Status' column.")
-
-    output_dir = BASE_DIR / "outputs"
+    output_dir = BASE_DIR / "Outputs"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     status_counts = df["Booking Status"].value_counts()
@@ -93,8 +92,10 @@ def analyze_booking_status(df: pd.DataFrame) -> pd.Series:
     return df["Booking Status"].value_counts()
 
 
+
 def generate_booking_report(df: pd.DataFrame) -> pd.DataFrame:
     """Generate a summary report for booking statuses."""
+
     total_bookings = len(df)
 
     if total_bookings == 0:
@@ -113,27 +114,66 @@ def generate_booking_report(df: pd.DataFrame) -> pd.DataFrame:
 
     return report
 
+
 def main() -> None:
     df = load_data(DATA_PATH)
-
     validate_data(df)
-    
-    report = generate_booking_report(df)
 
     output_dir = BASE_DIR / "Outputs"
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Generate and save the complete booking summary
+    report = generate_booking_report(df)
     report_path = output_dir / "booking_summary.csv"
     report.to_csv(report_path, index=False)
 
-    print(f"\nBooking report saved to: {report_path}")
-    print(report)
+    # Generate and save the unsuccessful booking report
+    cancellation_report = generate_cancellation_report(df)
+    cancellation_path = output_dir / "cancellation_report.csv"
+    cancellation_report.to_csv(cancellation_path, index=False)
+
     print(f"Dataset loaded and validated: {len(df):,} rows")
     print("\nBookings by status:")
-    print(analyze_booking_status(df))
+    print(report.to_string(index=False))
+
+    print("\nCancellation and unsuccessful booking report:")
+    print(cancellation_report.to_string(index=False))
 
     chart_path = save_booking_status_chart(df)
-    print(f"\nChart saved to: {chart_path}")
+    print(f"\nBooking report saved to: {report_path}")
+    print(f"Cancellation report saved to: {cancellation_path}")
+    print(f"Chart saved to: {chart_path}")
+
+
+
+
+def generate_cancellation_report(df: pd.DataFrame) -> pd.DataFrame:
+    """Generate a report of unsuccessful bookings."""
+
+    unsuccessful_statuses = [
+        "Cancelled by Driver",
+        "Cancelled by Customer",
+        "No Driver Found",
+        "Incomplete",
+    ]
+
+    total_bookings = len(df)
+
+    status_counts = df["Booking Status"].value_counts()
+
+    report = pd.DataFrame({
+        "Booking Status": unsuccessful_statuses,
+        "Bookings": [
+            int(status_counts.get(status, 0))
+            for status in unsuccessful_statuses
+        ],
+    })
+
+    report["Percentage"] = (
+        report["Bookings"] / total_bookings * 100
+    ).round(2)
+
+    return report
 
 
 if __name__ == "__main__":

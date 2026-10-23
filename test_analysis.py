@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import pytest
-from main import generate_booking_report
+from main import generate_booking_report, generate_cancellation_report
 from main import analyze_booking_status, load_data
 
 def test_generate_booking_report_percentages():
@@ -91,3 +91,20 @@ def test_missing_dataset_file():
 
     with pytest.raises(FileNotFoundError):
         load_data(missing_path)
+
+
+def test_cancellation_report_percentages():
+    df = pd.DataFrame({
+        "Booking Status": [
+            "Completed",
+            "Cancelled by Driver",
+            "Cancelled by Customer",
+            "No Driver Found",
+            "Incomplete",
+        ]
+    })
+
+    report = generate_cancellation_report(df)
+
+    assert list(report["Bookings"]) == [1, 1, 1, 1]
+    assert list(report["Percentage"]) == [20.0, 20.0, 20.0, 20.0]
