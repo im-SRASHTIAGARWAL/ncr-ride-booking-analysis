@@ -4,6 +4,39 @@ import pytest
 
 from main import analyze_booking_status, load_data
 
+from main import validate_data
+def test_validate_data_accepts_valid_dataset():
+    df = pd.DataFrame({
+        "Booking ID": ["B1", "B2"],
+        "Booking Status": ["Completed", "Incomplete"],
+        "Vehicle Type": ["Auto", "Bike"],
+        "Pickup Location": ["Noida", "Delhi"],
+        "Booking Value": [250.0,None],
+    })
+
+    validate_data(df)
+def test_validate_data_rejects_missing_column():
+    df = pd.DataFrame({
+        "Booking ID": ["B1"],
+        "Booking Status": ["Completed"],
+    })
+
+    with pytest.raises(ValueError, match="Missing required columns"):
+        validate_data(df)
+
+
+def test_validate_data_rejects_missing_booking_id():
+    df = pd.DataFrame({
+        "Booking ID": [None],
+        "Booking Status": ["Completed"],
+        "Vehicle Type": ["Auto"],
+        "Pickup Location": ["Noida"],
+        "Booking Value": [250.0],
+    })
+
+    with pytest.raises(ValueError, match="Booking ID"):
+        validate_data(df)
+
 
 def test_analyze_booking_status_counts():
     df = pd.DataFrame({

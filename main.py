@@ -48,6 +48,43 @@ def load_data(file_path: Path) -> pd.DataFrame:
     return df
 
 
+REQUIRED_COLUMNS = [
+    "Booking ID",
+    "Booking Status",
+    "Vehicle Type",
+    "Pickup Location",
+    "Booking Value",
+]
+
+
+def validate_data(df: pd.DataFrame) -> None:
+    """Validate required columns and dataset contents."""
+    if df.empty:
+        raise ValueError("The dataset is empty.")
+
+    missing_columns = [
+        column
+        for column in REQUIRED_COLUMNS
+        if column not in df.columns
+    ]
+
+    if missing_columns:
+        raise ValueError(
+            f"Missing required columns: {missing_columns}"
+        )
+
+    if df["Booking ID"].isna().any():
+        raise ValueError("Booking ID contains missing values.")
+
+    if df["Booking Status"].isna().any():
+        raise ValueError("Booking Status contains missing values.")
+
+    if df["Vehicle Type"].isna().any():
+        raise ValueError("Vehicle Type contains missing values.")
+
+    if df["Pickup Location"].isna().any():
+        raise ValueError("Pickup Location contains missing values.")
+
 def analyze_booking_status(df: pd.DataFrame) -> pd.Series:
     """Count bookings by status."""
     if "Booking Status" not in df.columns:
@@ -55,12 +92,12 @@ def analyze_booking_status(df: pd.DataFrame) -> pd.Series:
 
     return df["Booking Status"].value_counts()
 
-
-
 def main() -> None:
     df = load_data(DATA_PATH)
 
-    print(f"Dataset loaded successfully: {len(df):,} rows")
+    validate_data(df)
+    
+    print(f"Dataset loaded and validated: {len(df):,} rows")
     print("\nBookings by status:")
     print(analyze_booking_status(df))
 
@@ -70,3 +107,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
