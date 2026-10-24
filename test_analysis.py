@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import pytest
-from main import generate_booking_report, generate_cancellation_report, generate_location_report, generate_reason_report
+from main import generate_booking_report, generate_cancellation_report, generate_location_report, generate_reason_report, save_location_chart
 from main import analyze_booking_status, load_data
 
 def test_generate_booking_report_percentages():
@@ -166,3 +166,16 @@ def test_location_report_filters_low_booking_counts():
 
     assert "A" not in report["Pickup Location"].values
     assert "B" in report["Pickup Location"].values
+
+def test_save_location_chart():
+    df = pd.DataFrame({
+        "Pickup Location": ["Location A", "Location B"],
+        "Total_Bookings": [200, 150],
+        "Unsuccessful_Bookings": [80, 45],
+        "Unsuccessful_Rate_Percent": [40.0, 30.0],
+    })
+
+    chart_path = save_location_chart(df)
+
+    assert chart_path.exists()
+    assert chart_path.name == "location_unsuccessful_rate.png"

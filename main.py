@@ -151,6 +151,9 @@ def main() -> None:
     location_path = output_dir / "location_analysis.csv"
     location_report.to_csv(location_path, index=False)
 
+    location_chart_path = save_location_chart(location_report)
+    print(f"Location chart saved to: {location_chart_path}")
+    
     print("\nTop 10 locations by unsuccessful booking rate:")
     print(location_report.head(10).to_string(index=False))
     print(f"Location report saved to: {location_path}")
@@ -296,6 +299,57 @@ def generate_location_report(df: pd.DataFrame,minimum_bookings: int = 100,) -> p
         ["Unsuccessful_Rate_Percent", "Total_Bookings"],
         ascending=[False, False],
     )
+
+def save_location_chart(location_report: pd.DataFrame) -> Path:
+    """Save a chart of locations with the highest unsuccessful booking rates."""
+
+    required_columns = [
+        "Pickup Location",
+        "Unsuccessful_Rate_Percent",
+        "Total_Bookings",
+    ]
+
+    missing_columns = [
+        column
+        for column in required_columns
+        if column not in location_report.columns
+    ]
+
+    if missing_columns:
+        raise ValueError(f"Missing required columns: {missing_columns}")
+
+    if location_report.empty:
+        raise ValueError("Location report contains no locations to plot.")
+
+    top_locations = location_report.head(10).copy()
+    top_locations = top_locations.sort_values(
+        "Unsuccessful_Rate_Percent",
+        ascending=True,
+    )
+
+    output_dir = BASE_DIR / "Outputs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    ax = top_locations.plot(
+        x="Pickup Location",
+        y="Unsuccessful_Rate_Percent",
+        kind="barh",
+        figsize=(10, 6),
+        legend=False,
+        title="Top Pickup Locations by Unsuccessful Booking Rate",
+    )
+
+    ax.set_xlabel("Unsuccessful Booking Rate (%)")
+    ax.set_ylabel("Pickup Location")
+
+    plt.tight_layout()
+
+    chart_path = output_dir / "location_unsuccessful_rate.png"
+    plt.savefig(chart_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+    return chart_path
+
 
 
 def save_reason_chart(
