@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import pytest
-from main import generate_booking_report, generate_cancellation_report, generate_reason_report
+from main import generate_booking_report, generate_cancellation_report, generate_location_report, generate_reason_report
 from main import analyze_booking_status, load_data
 
 def test_generate_booking_report_percentages():
@@ -109,7 +109,6 @@ def test_cancellation_report_percentages():
     assert list(report["Bookings"]) == [1, 1, 1, 1]
     assert list(report["Percentage"]) == [20.0, 20.0, 20.0, 20.0]
 
-
 def test_generate_reason_report():
     df = pd.DataFrame({
         "Reason": [
@@ -126,3 +125,44 @@ def test_generate_reason_report():
     assert report.iloc[0]["Reason"] == "Wrong Address"
     assert report.iloc[0]["Count"] == 2
     assert report.iloc[0]["Percentage"] == 66.67
+
+def test_generate_location_report():
+    df = pd.DataFrame({
+        "Pickup Location": ["A", "A", "A", "B", "B"],
+        "Booking Status": [
+            "Completed",
+            "Cancelled by Driver",
+            "Completed",
+            "No Driver Found",
+            "Completed",
+        ],
+    })
+
+    """report = generate_location_report(df)"""
+    report = generate_location_report(df, minimum_bookings=1)
+    report = report.set_index("Pickup Location")
+
+    assert report.loc["A", "Total_Bookings"] == 3
+    assert report.loc["A", "Unsuccessful_Bookings"] == 1
+    assert report.loc["A", "Unsuccessful_Rate_Percent"] == 33.33
+
+    assert report.loc["B", "Total_Bookings"] == 2
+    assert report.loc["B", "Unsuccessful_Bookings"] == 1
+    assert report.loc["B", "Unsuccessful_Rate_Percent"] == 50.0
+
+
+def test_location_report_filters_low_booking_counts():
+    df = pd.DataFrame({
+        "Pickup Location": ["A"] * 3 + ["B"] * 101,
+        "Booking Status": (
+            ["Completed"] * 2
+            + ["Cancelled by Driver"]
+            + ["Completed"] * 80
+            + ["Cancelled by Driver"] * 21
+        ),
+    })
+
+    report = generate_location_report(df, minimum_bookings=100)
+
+    assert "A" not in report["Pickup Location"].values
+    assert "B" in report["Pickup Location"].values

@@ -146,7 +146,15 @@ def main() -> None:
         "driver_cancellation_reasons": "Driver Cancellation Reason",
         "incomplete_ride_reasons": "Incomplete Rides Reason",
     }
+    location_report = generate_location_report(df)
 
+    location_path = output_dir / "location_analysis.csv"
+    location_report.to_csv(location_path, index=False)
+
+    print("\nTop 10 locations by unsuccessful booking rate:")
+    print(location_report.head(10).to_string(index=False))
+    print(f"Location report saved to: {location_path}")
+    
     for filename, column in reason_columns.items():
         reason_report = generate_reason_report(df, column)
 
@@ -233,6 +241,61 @@ def generate_reason_report(
         ).round(2)
 
     return report
+
+
+def generate_location_report(df: pd.DataFrame,minimum_bookings: int = 100,) -> pd.DataFrame:
+    """Summarize unsuccessful booking rates by pickup location."""
+
+    required_columns = ["Pickup Location", "Booking Status"]
+    missing_columns = [
+        column for column in required_columns
+        if column not in df.columns
+    ]
+
+    if missing_columns:
+        raise ValueError(f"Missing required columns: {missing_columns}")
+
+    if minimum_bookings < 1:
+        raise ValueError("minimum_bookings must be at least 1.")
+
+    valid_df = df.dropna(subset=required_columns).copy()
+
+    if valid_df.empty:
+        raise ValueError("No valid location data available.")
+
+    unsuccessful_statuses = [
+        "Cancelled by Driver",
+        "Cancelled by Customer",
+        "No Driver Found",
+        "Incomplete",
+    ]
+
+    valid_df["Unsuccessful"] = (
+        valid_df["Booking Status"].isin(unsuccessful_statuses)
+    )
+
+    report = (
+        valid_df.groupby("Pickup Location")
+        .agg(
+            Total_Bookings=("Booking Status", "size"),
+            Unsuccessful_Bookings=("Unsuccessful", "sum"),
+        )
+        .reset_index()
+    )
+
+    report["Unsuccessful_Rate_Percent"] = (
+        report["Unsuccessful_Bookings"]
+        / report["Total_Bookings"] * 100
+    ).round(2)
+
+    report = report[
+        report["Total_Bookings"] >= minimum_bookings
+    ]
+
+    return report.sort_values(
+        ["Unsuccessful_Rate_Percent", "Total_Bookings"],
+        ascending=[False, False],
+    )
 
 
 def save_reason_chart(
