@@ -108,19 +108,20 @@ The project generates:
 ## Visualizations
 
 ### 1. Booking Status Distribution
-![Booking Status Distribution](Docs/images/booking_status.png)
+![Booking Status Distribution](docs/images/booking_status.png)
 
 ### 2. Customer Cancellation Reasons
-![Customer Cancellation Reasons](Docs/images/customer_cancellation_reasons.png)
+![Customer Cancellation Reasons](docs/images/customer_cancellation_reasons.png)
 
 ### 3. Driver Cancellation Reasons
-![Driver Cancellation Reasons](Docs/images/driver_cancellation_reasons.png)
+![Driver Cancellation Reasons](docs/images/driver_cancellation_reasons.png)
 
 ### 4. Incomplete Ride Reasons
-![Incomplete Ride Reasons](Docs/images/incomplete_ride_reasons.png)
+![Incomplete Ride Reasons](docs/images/incomplete_ride_reasons.png)
 
 ### 5. Locations with Highest Unsuccessful Booking Rates
-![Location Analysis](Docs/images/location_unsuccessful_rate.png)
+![Location Analysis](docs/images/location_unsuccessful_rate.png)
+
 
 ## Key Findings
 
